@@ -22,13 +22,14 @@
     --shadow-dark: rgba(0, 0, 0, 0.6); /* Deeper shadow for depth */
     --shadow-card-hover: rgba(0, 0, 0, 0.8); /* More pronounced shadow on card hover */
 
-    /* Status Colors (kept distinct for immediate recognition, slightly refined) */
+    /* Status Colors (refined and expanded) */
     --status-success: #28a745; /* Green */
     --status-failed: #dc3545; /* Red */
     --status-unknown: #ffc107; /* Yellow (with dark text) */
-    --status-error: #6c757d; /* Grey, for general errors */
     --status-critical: #b22222; /* Firebrick - for critical issues */
     --status-warning: #ff8c00; /* DarkOrange - for warnings */
+    --status-ssh-error: #8B0000; /* Dark red for specific bulletin SSH issues */
+    --status-system-error: #6c757d; /* Grey, for general system errors (e.g., API failure) */
 
     /* Log Line Specific Styles */
     --log-text-normal: var(--text-primary);
@@ -61,14 +62,14 @@
 
 /* --- Base Styles --- */
 body {
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Prioritize Inter if linked, fallback to Segoe UI */
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--bg-primary);
     margin: 0;
     padding: 20px;
     color: var(--text-primary);
     line-height: 1.6;
-    -webkit-font-smoothing: antialiased; /* Smoother font rendering */
-    -moz-osx-font-smoothing: grayscale; /* Smoother font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
@@ -76,21 +77,21 @@ body {
     margin: 20px auto;
     background-color: var(--bg-secondary);
     padding: 30px;
-    border-radius: 10px; /* Slightly more rounded */
-    box-shadow: 0 6px 20px var(--shadow-dark); /* Deeper, softer shadow */
-    border: 1px solid var(--border-color); /* Subtle border */
+    border-radius: 10px;
+    box-shadow: 0 6px 20px var(--shadow-dark);
+    border: 1px solid var(--border-color);
 }
 
 h1 {
     text-align: center;
     color: var(--accent-color);
     margin-bottom: 30px;
-    font-size: 2.5em; /* Slightly larger */
-    font-weight: 600; /* Bolder */
+    font-size: 2.5em;
+    font-weight: 600;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 15px;
-    text-shadow: 0 0 12px var(--accent-glow); /* More prominent glow */
-    letter-spacing: 0.05em; /* Subtle letter spacing */
+    text-shadow: 0 0 12px var(--accent-glow);
+    letter-spacing: 0.05em;
 }
 
 /* --- Header Actions --- */
@@ -100,26 +101,39 @@ h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px; /* Space between button and text */
+    gap: 20px;
 }
 
 #refreshButton {
     background-color: var(--accent-color);
     color: white;
     border: none;
-    padding: 12px 25px; /* Larger padding */
+    padding: 12px 25px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 1.1em; /* Slightly larger font */
+    font-size: 1.1em;
     font-weight: 500;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); /* Accent colored shadow */
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
 }
 
 #refreshButton:hover {
     background-color: var(--accent-hover);
-    transform: translateY(-3px); /* More pronounced lift */
+    transform: translateY(-3px);
     box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
+}
+
+/* Animation for refresh button when loading */
+#refreshButton.loading {
+    animation: pulse 1.5s infinite;
+    background-color: var(--accent-hover);
+    cursor: wait;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
 }
 
 #lastUpdated {
@@ -130,15 +144,15 @@ h1 {
 /* --- Bulletin Grid & Cards --- */
 .bulletins-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Slightly wider cards */
-    gap: 30px; /* More space between cards */
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 30px;
 }
 
 .bulletin-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 25px; /* More padding */
+    padding: 25px;
     box-shadow: 0 3px 15px var(--shadow-dark);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
@@ -147,8 +161,8 @@ h1 {
 }
 
 .bulletin-card:hover {
-    transform: translateY(-7px); /* More pronounced lift */
-    box-shadow: 0 10px 30px var(--shadow-card-hover); /* Deeper shadow on hover */
+    transform: translateY(-7px);
+    box-shadow: 0 10px 30px var(--shadow-card-hover);
 }
 
 .bulletin-card h2 {
@@ -156,13 +170,13 @@ h1 {
     color: var(--accent-color);
     font-size: 1.6em;
     font-weight: 500;
-    border-bottom: 1px dashed var(--border-color); /* Subtle dashed border */
+    border-bottom: 1px dashed var(--border-color);
     padding-bottom: 12px;
     margin-bottom: 18px;
 }
 
 .bulletin-info p {
-    margin: 10px 0; /* More spacing */
+    margin: 10px 0;
     font-size: 1em;
     color: var(--text-secondary);
 }
@@ -174,42 +188,59 @@ h1 {
 
 .status-indicator {
     display: inline-block;
-    padding: 6px 12px; /* Slightly larger */
-    border-radius: 5px; /* Slightly more rounded */
+    padding: 6px 12px;
+    border-radius: 5px;
     font-weight: bold;
     color: white;
     font-size: 0.8em;
     margin-left: 10px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-    text-transform: uppercase; /* Make status text uppercase */
+    text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
-/* Status Colors (kept distinct for clear indication) */
+/* Updated Status Colors */
 .status-SUCCESS { background-color: var(--status-success); }
 .status-FAILED { background-color: var(--status-failed); }
-.status-UNKNOWN { background-color: var(--status-unknown); color: #333; } /* Dark text for yellow */
-.status-ERROR { background-color: var(--status-error); }
-.status-CRITICAL { background-color: var(--status-critical); } /* New critical status color */
-.status-WARNING { background-color: var(--status-warning); } /* New warning status color */
+.status-UNKNOWN { background-color: var(--status-unknown); color: #333; }
+.status-CRITICAL { background-color: var(--status-critical); }
+.status-WARNING { background-color: var(--status-warning); }
+.status-SSH_ERROR { background-color: var(--status-ssh-error); } /* For individual bulletin SSH issues */
+.status-SYSTEM_ERROR { background-color: var(--status-system-error); } /* For global backend/API errors */
+
+/* New: Styling for the warning badge/notification */
+.warning-badge {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 1.1em; /* Make it slightly larger than text */
+    color: var(--status-warning); /* Use the warning color */
+    vertical-align: middle; /* Align with text */
+    cursor: help; /* Indicate it's informational */
+    animation: flashWarning 1.5s infinite alternate; /* Subtle animation */
+}
+
+@keyframes flashWarning {
+    0% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
 
 
 /* --- Bulletin Actions --- */
 .bulletin-actions {
-    margin-top: 25px; /* More space */
+    margin-top: 25px;
     display: flex;
     flex-wrap: wrap;
-    gap: 12px; /* Space between buttons */
+    gap: 12px;
 }
 
 .bulletin-actions button,
-.bulletin-actions a {
+.bulletin-actions a { /* Keep 'a' for potential future links, though currently unused */
     flex: 1;
-    min-width: 130px; /* Slightly wider minimum */
+    min-width: 130px;
     padding: 10px 18px;
-    background-color: var(--button-action-bg); /* Unified dark background */
-    color: var(--button-action-text); /* Default text color */
-    border: 1px solid var(--border-color); /* Subtle border */
+    background-color: var(--button-action-bg);
+    color: var(--button-action-text);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.95em;
@@ -222,18 +253,29 @@ h1 {
 
 .bulletin-actions button:hover,
 .bulletin-actions a:hover {
-    background-color: var(--button-action-hover-bg); /* Accent background on hover */
-    color: var(--button-action-hover-text); /* White text on accent hover */
+    background-color: var(--button-action-hover-bg);
+    color: var(--button-action-hover-text);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    border-color: var(--accent-color); /* Accent border on hover */
+    border-color: var(--accent-color);
 }
+
+.bulletin-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+    background-color: var(--button-action-bg);
+    border-color: var(--border-color);
+    color: var(--text-dim);
+}
+
 
 /* --- Loading Message --- */
 .loading-message {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 60px; /* More padding */
+    padding: 60px;
     font-size: 1.3em;
     color: var(--text-dim);
     font-weight: 400;
@@ -249,25 +291,25 @@ h1 {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgba(0,0,0,0.9); /* Very dark, almost opaque overlay */
-    backdrop-filter: blur(10px); /* Stronger blur effect */
+    background-color: rgba(0,0,0,0.9);
+    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    display: flex; /* Use flexbox to center content */
+    display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .modal-content {
     background-color: var(--bg-modal);
-    margin: auto; /* Centered by flexbox */
-    padding: 35px; /* More padding */
+    margin: auto;
+    padding: 35px;
     border: 1px solid var(--border-color);
-    width: 90%; /* Wider modal */
-    max-width: 1000px; /* Max width */
+    width: 90%;
+    max-width: 1000px;
     border-radius: 10px;
-    box-shadow: 0 15px 40px var(--shadow-dark); /* Deeper shadow */
+    box-shadow: 0 15px 40px var(--shadow-dark);
     position: relative;
-    max-height: 90vh; /* Taller modal */
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
 }
@@ -288,8 +330,8 @@ h1 {
     position: absolute;
     top: 20px;
     right: 30px;
-    font-size: 35px; /* Larger close button */
-    font-weight: 300; /* Lighter weight */
+    font-size: 35px;
+    font-weight: 300;
     cursor: pointer;
     transition: color 0.3s ease, transform 0.2s ease;
 }
@@ -297,18 +339,18 @@ h1 {
 .close-button:hover,
 .close-button:focus {
     color: var(--text-primary);
-    transform: rotate(90deg); /* Cool rotation effect */
+    transform: rotate(90deg);
 }
 
-.modal-log-actions { /* Renamed class */
+.modal-log-actions {
     display: flex;
-    justify-content: flex-end; /* Push buttons to the right */
-    gap: 10px; /* Space between buttons */
+    justify-content: flex-end;
+    gap: 10px;
     margin-bottom: 15px;
-    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    flex-wrap: wrap;
 }
 
-.export-log-button { /* Common style for all export buttons */
+.export-log-button {
     color: white;
     border: none;
     padding: 10px 20px;
@@ -318,10 +360,9 @@ h1 {
     font-weight: 500;
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    min-width: 120px; /* Ensure buttons have a minimum width */
+    min-width: 120px;
 }
 
-/* Specific styles for each export button type */
 .export-log-button.export-errors {
     background-color: var(--button-export-errors-bg);
 }
@@ -350,20 +391,20 @@ h1 {
 }
 
 #modalLogContent {
-    background-color: var(--bg-log); /* Very dark, console-like background */
+    background-color: var(--bg-log);
     border: 1px solid var(--border-color);
-    padding: 20px; /* More padding */
+    padding: 20px;
     border-radius: 6px;
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace; /* Modern monospace font */
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
     font-size: 0.9em;
-    color: var(--log-text-normal); /* Light text for log content */
+    color: var(--log-text-normal);
     overflow-y: auto;
     flex-grow: 1;
-    box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.4); /* Deeper inner shadow */
-    line-height: 1.5; /* Improved line spacing */
-    tab-size: 4; /* Standard tab size */
+    box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.4);
+    line-height: 1.5;
+    tab-size: 4;
 }
 
 /* Styling for log lines (requires JS to add these classes) */
@@ -428,7 +469,7 @@ h1 {
         font-size: 1.4em;
     }
     .bulletin-actions {
-        flex-direction: column; /* Stack buttons vertically */
+        flex-direction: column;
         gap: 10px;
     }
     .bulletin-actions button,
@@ -450,9 +491,9 @@ h1 {
         top: 15px;
         right: 20px;
     }
-    .modal-log-actions { /* Renamed class */
-        flex-direction: column; /* Stack export buttons vertically */
-        align-items: center; /* Center them */
+    .modal-log-actions {
+        flex-direction: column;
+        align-items: center;
         gap: 10px;
     }
     .export-log-button {
