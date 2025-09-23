@@ -186,22 +186,6 @@ if __name__ == "__main__":
             else:
                 print(f"Command 'this_command_does_not_exist' unexpectedly succeeded. Output:\n{output}\n")
 
-            # Test 4: Attempting to run a bulletin's rerun command (CAUTION: This will actually run it!)
-            # UNCOMMENT THE FOLLOWING BLOCK IF YOU ARE SURE YOU WANT TO TEST A RERUN COMMAND
-            # if BULLETINS:
-            #     test_bulletin_rerun = BULLETINS[0]
-            #     print(f"\n--- Testing re-run command for {test_bulletin_rerun['name']} (CAUTION: THIS WILL RUN!) ---")
-            #     confirm = input(f"Type 'yes' to run '{test_bulletin_rerun['rerun_command']}' on BQRM: ")
-            #     if confirm.lower() == 'yes':
-            #         success, output, error = temp_bqrm_ssh_client.execute_command(test_bulletin_rerun['rerun_command'])
-            #         if success:
-            #             print(f"Rerun command successful. Output:\n{output}\n")
-            #         else:
-            #             print(f"Rerun command failed. Error:\n{error}\n")
-            #     else:
-            #         print("Rerun test skipped.")
-            # else:
-            #     print("No bulletins configured in config.py for rerun test.")
 
         else:
             print("SSH client failed to connect during self-test. Check logs above.")
