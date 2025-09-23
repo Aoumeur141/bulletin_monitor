@@ -1,68 +1,145 @@
+/* --- Global Variables for a Modern Dark Theme --- */
+:root {
+    /* Backgrounds */
+    --bg-primary: #121212; /* Very dark background for the body */
+    --bg-secondary: #1e1e1e; /* Slightly lighter for main containers */
+    --bg-card: #282828; /* Even lighter for cards, provides subtle depth */
+    --bg-modal: #282828; /* Modal content background */
+    --bg-log: #1a1a1a; /* Distinct, very dark background for log content */
+
+    /* Text Colors */
+    --text-primary: #e0e0e0; /* Main readable text */
+    --text-secondary: #a0a0a0; /* Muted text for secondary info */
+    --text-dim: #707070; /* Very subtle text for less important details */
+
+    /* Accent Color - A single, clean blue */
+    --accent-color: #007bff; /* Primary accent for interactive elements */
+    --accent-hover: #0056b3; /* Darker accent on hover */
+    --accent-glow: rgba(0, 123, 255, 0.3); /* Subtle glow for titles */
+
+    /* Borders & Shadows */
+    --border-color: #3a3a3a; /* Subtle border for separation */
+    --shadow-dark: rgba(0, 0, 0, 0.6); /* Deeper shadow for depth */
+    --shadow-card-hover: rgba(0, 0, 0, 0.8); /* More pronounced shadow on card hover */
+
+    /* Status Colors (kept distinct for immediate recognition, slightly refined) */
+    --status-success: #28a745; /* Green */
+    --status-failed: #dc3545; /* Red */
+    --status-unknown: #ffc107; /* Yellow (with dark text) */
+    --status-error: #6c757d; /* Grey, for general errors */
+    --status-critical: #b22222; /* Firebrick - for critical issues */
+    --status-warning: #ff8c00; /* DarkOrange - for warnings */
+
+    /* Log Line Specific Styles */
+    --log-text-normal: var(--text-primary);
+    --log-error-text: #ffdddd; /* Light red for error text in log */
+    --log-error-line-bg: rgba(220, 53, 69, 0.15); /* Subtle red background for error lines */
+    --log-error-line-border: var(--status-failed); /* Red border for error lines */
+
+    --log-critical-text: #ffe0e0; /* Very light red for critical text */
+    --log-critical-line-bg: rgba(178, 34, 34, 0.15); /* Subtle firebrick background */
+    --log-critical-line-border: var(--status-critical); /* Firebrick border */
+
+    --log-warning-text: #fff8e0; /* Very light orange/yellow for warning text */
+    --log-warning-line-bg: rgba(255, 165, 0, 0.15); /* Subtle orange background */
+    --log-warning-line-border: var(--status-warning); /* Orange border */
+
+    /* Button Specific Colors */
+    --button-action-bg: #3a3a3a; /* Dark grey for general action buttons */
+    --button-action-hover-bg: var(--accent-color); /* Accent on hover */
+    --button-action-text: var(--text-primary); /* Default text color */
+    --button-action-hover-text: white; /* White text on accent hover */
+
+    /* Export Log Buttons (using status colors directly) */
+    --button-export-errors-bg: var(--status-failed);
+    --button-export-errors-hover: #c82333;
+    --button-export-warnings-bg: var(--status-warning);
+    --button-export-warnings-hover: #e67e00;
+    --button-export-critical-bg: var(--status-critical);
+    --button-export-critical-hover: #a01f1f;
+}
+
+/* --- Base Styles --- */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f7f6;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Prioritize Inter if linked, fallback to Segoe UI */
+    background-color: var(--bg-primary);
     margin: 0;
     padding: 20px;
-    color: #333;
+    color: var(--text-primary);
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased; /* Smoother font rendering */
+    -moz-osx-font-smoothing: grayscale; /* Smoother font rendering */
 }
 
 .container {
     max-width: 1200px;
     margin: 20px auto;
-    background-color: #ffffff;
+    background-color: var(--bg-secondary);
     padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px; /* Slightly more rounded */
+    box-shadow: 0 6px 20px var(--shadow-dark); /* Deeper, softer shadow */
+    border: 1px solid var(--border-color); /* Subtle border */
 }
 
 h1 {
     text-align: center;
-    color: #2c3e50;
+    color: var(--accent-color);
     margin-bottom: 30px;
-    font-size: 2.2em;
-    border-bottom: 2px solid #e0e0e0;
+    font-size: 2.5em; /* Slightly larger */
+    font-weight: 600; /* Bolder */
+    border-bottom: 2px solid var(--border-color);
     padding-bottom: 15px;
+    text-shadow: 0 0 12px var(--accent-glow); /* More prominent glow */
+    letter-spacing: 0.05em; /* Subtle letter spacing */
 }
 
+/* --- Header Actions --- */
 .header-actions {
     text-align: center;
     margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px; /* Space between button and text */
 }
 
 #refreshButton {
-    background-color: #007bff;
+    background-color: var(--accent-color);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 12px 25px; /* Larger padding */
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
-    margin-right: 15px;
+    font-size: 1.1em; /* Slightly larger font */
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); /* Accent colored shadow */
 }
 
 #refreshButton:hover {
-    background-color: #0056b3;
+    background-color: var(--accent-hover);
+    transform: translateY(-3px); /* More pronounced lift */
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4);
 }
 
 #lastUpdated {
-    font-size: 0.9em;
-    color: #666;
+    font-size: 0.95em;
+    color: var(--text-secondary);
 }
 
+/* --- Bulletin Grid & Cards --- */
 .bulletins-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Slightly wider cards */
+    gap: 30px; /* More space between cards */
 }
 
 .bulletin-card {
-    background-color: #fdfdfd;
-    border: 1px solid #e0e0e0;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 25px; /* More padding */
+    box-shadow: 0 3px 15px var(--shadow-dark);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     flex-direction: column;
@@ -70,184 +147,336 @@ h1 {
 }
 
 .bulletin-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    transform: translateY(-7px); /* More pronounced lift */
+    box-shadow: 0 10px 30px var(--shadow-card-hover); /* Deeper shadow on hover */
 }
 
 .bulletin-card h2 {
     margin-top: 0;
-    color: #34495e;
-    font-size: 1.5em;
-    border-bottom: 1px dashed #eee;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+    color: var(--accent-color);
+    font-size: 1.6em;
+    font-weight: 500;
+    border-bottom: 1px dashed var(--border-color); /* Subtle dashed border */
+    padding-bottom: 12px;
+    margin-bottom: 18px;
 }
 
 .bulletin-info p {
-    margin: 8px 0;
-    font-size: 0.95em;
-    color: #555;
+    margin: 10px 0; /* More spacing */
+    font-size: 1em;
+    color: var(--text-secondary);
 }
 
 .bulletin-info strong {
-    color: #333;
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .status-indicator {
     display: inline-block;
-    padding: 5px 10px;
-    border-radius: 4px;
+    padding: 6px 12px; /* Slightly larger */
+    border-radius: 5px; /* Slightly more rounded */
     font-weight: bold;
     color: white;
-    font-size: 0.85em;
+    font-size: 0.8em;
     margin-left: 10px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    text-transform: uppercase; /* Make status text uppercase */
+    letter-spacing: 0.05em;
 }
 
-/* Status Colors */
-.status-SUCCESS { background-color: #28a745; } /* Green */
-.status-FAILED { background-color: #dc3545; } /* Red */
-.status-UNKNOWN { background-color: #ffc107; color: #333; } /* Yellow */
-.status-ERROR { background-color: #6c757d; } /* Grey for backend errors */
+/* Status Colors (kept distinct for clear indication) */
+.status-SUCCESS { background-color: var(--status-success); }
+.status-FAILED { background-color: var(--status-failed); }
+.status-UNKNOWN { background-color: var(--status-unknown); color: #333; } /* Dark text for yellow */
+.status-ERROR { background-color: var(--status-error); }
+.status-CRITICAL { background-color: var(--status-critical); } /* New critical status color */
+.status-WARNING { background-color: var(--status-warning); } /* New warning status color */
 
+
+/* --- Bulletin Actions --- */
 .bulletin-actions {
-    margin-top: 20px;
+    margin-top: 25px; /* More space */
     display: flex;
-    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-    gap: 10px; /* Space between buttons */
+    flex-wrap: wrap;
+    gap: 12px; /* Space between buttons */
 }
 
 .bulletin-actions button,
 .bulletin-actions a {
-    flex: 1; /* Allow buttons to grow and shrink */
-    min-width: 120px; /* Minimum width for buttons */
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
+    flex: 1;
+    min-width: 130px; /* Slightly wider minimum */
+    padding: 10px 18px;
+    background-color: var(--button-action-bg); /* Unified dark background */
+    color: var(--button-action-text); /* Default text color */
+    border: 1px solid var(--border-color); /* Subtle border */
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 0.9em;
+    font-size: 0.95em;
+    font-weight: 500;
     text-align: center;
-    text-decoration: none; /* For anchor tags */
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.rerun-button {
-    background-color: #ff8c00; /* Orange */
-    color: white;
-}
-.rerun-button:hover {
-    background-color: #e67e00;
-    transform: translateY(-1px);
-}
-
-.view-log-button {
-    background-color: #17a2b8; /* Teal */
-    color: white;
-}
-.view-log-button:hover {
-    background-color: #138496;
-    transform: translateY(-1px);
+.bulletin-actions button:hover,
+.bulletin-actions a:hover {
+    background-color: var(--button-action-hover-bg); /* Accent background on hover */
+    color: var(--button-action-hover-text); /* White text on accent hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border-color: var(--accent-color); /* Accent border on hover */
 }
 
-.code-link-button {
-    background-color: #6f42c1; /* Purple */
-    color: white;
-}
-.code-link-button:hover {
-    background-color: #5a32a3;
-    transform: translateY(-1px);
-}
-
-/* Loading message */
+/* --- Loading Message --- */
 .loading-message {
-    grid-column: 1 / -1; /* Span across all columns */
+    grid-column: 1 / -1;
     text-align: center;
-    padding: 50px;
-    font-size: 1.2em;
-    color: #666;
+    padding: 60px; /* More padding */
+    font-size: 1.3em;
+    color: var(--text-dim);
+    font-weight: 400;
 }
 
-/* Modal styles */
+/* --- Modal Styles --- */
 .modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
+    display: none;
+    position: fixed;
+    z-index: 1000;
     left: 0;
     top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
-    backdrop-filter: blur(3px); /* Optional blur effect */
-    -webkit-backdrop-filter: blur(3px); /* Safari support */
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.9); /* Very dark, almost opaque overlay */
+    backdrop-filter: blur(10px); /* Stronger blur effect */
+    -webkit-backdrop-filter: blur(10px);
+    display: flex; /* Use flexbox to center content */
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-content {
-    background-color: #fefefe;
-    margin: 10% auto; /* 10% from the top and centered */
-    padding: 30px;
-    border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
-    max-width: 900px;
-    border-radius: 8px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    background-color: var(--bg-modal);
+    margin: auto; /* Centered by flexbox */
+    padding: 35px; /* More padding */
+    border: 1px solid var(--border-color);
+    width: 90%; /* Wider modal */
+    max-width: 1000px; /* Max width */
+    border-radius: 10px;
+    box-shadow: 0 15px 40px var(--shadow-dark); /* Deeper shadow */
     position: relative;
-    max-height: 80vh; /* Max height for scrollable content */
+    max-height: 90vh; /* Taller modal */
     display: flex;
     flex-direction: column;
 }
 
 .modal-content h2 {
     margin-top: 0;
-    color: #2c3e50;
-    font-size: 1.8em;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
+    color: var(--accent-color);
+    font-size: 2em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 8px var(--accent-glow);
 }
 
 .close-button {
-    color: #aaa;
+    color: var(--text-dim);
     position: absolute;
-    top: 15px;
-    right: 25px;
-    font-size: 30px;
-    font-weight: bold;
+    top: 20px;
+    right: 30px;
+    font-size: 35px; /* Larger close button */
+    font-weight: 300; /* Lighter weight */
     cursor: pointer;
+    transition: color 0.3s ease, transform 0.2s ease;
 }
 
 .close-button:hover,
 .close-button:focus {
-    color: #333;
-    text-decoration: none;
+    color: var(--text-primary);
+    transform: rotate(90deg); /* Cool rotation effect */
+}
+
+.modal-log-actions { /* Renamed class */
+    display: flex;
+    justify-content: flex-end; /* Push buttons to the right */
+    gap: 10px; /* Space between buttons */
+    margin-bottom: 15px;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+}
+
+.export-log-button { /* Common style for all export buttons */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    min-width: 120px; /* Ensure buttons have a minimum width */
+}
+
+/* Specific styles for each export button type */
+.export-log-button.export-errors {
+    background-color: var(--button-export-errors-bg);
+}
+.export-log-button.export-errors:hover {
+    background-color: var(--button-export-errors-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.export-log-button.export-warnings {
+    background-color: var(--button-export-warnings-bg);
+}
+.export-log-button.export-warnings:hover {
+    background-color: var(--button-export-warnings-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.export-log-button.export-critical {
+    background-color: var(--button-export-critical-bg);
+}
+.export-log-button.export-critical:hover {
+    background-color: var(--button-export-critical-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 #modalLogContent {
-    background-color: #eef1f4;
-    border: 1px solid #dcdcdc;
-    padding: 15px;
-    border-radius: 5px;
-    white-space: pre-wrap; /* Preserve whitespace and wrap text */
-    word-wrap: break-word; /* Break long words */
-    font-family: 'Consolas', 'Monaco', monospace;
+    background-color: var(--bg-log); /* Very dark, console-like background */
+    border: 1px solid var(--border-color);
+    padding: 20px; /* More padding */
+    border-radius: 6px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Fira Code', 'Consolas', 'Monaco', monospace; /* Modern monospace font */
     font-size: 0.9em;
-    color: #333;
-    overflow-y: auto; /* Make log content scrollable */
-    flex-grow: 1; /* Allow it to take available space */
+    color: var(--log-text-normal); /* Light text for log content */
+    overflow-y: auto;
+    flex-grow: 1;
+    box-shadow: inset 0 1px 8px rgba(0, 0, 0, 0.4); /* Deeper inner shadow */
+    line-height: 1.5; /* Improved line spacing */
+    tab-size: 4; /* Standard tab size */
 }
 
-/* Responsive adjustments */
+/* Styling for log lines (requires JS to add these classes) */
+#modalLogContent .log-error {
+    background-color: var(--log-error-line-bg);
+    color: var(--log-error-text);
+    font-weight: 500;
+    display: block;
+    padding: 4px 8px;
+    margin: 0 -8px;
+    border-left: 4px solid var(--log-error-line-border);
+    border-radius: 2px;
+}
+
+#modalLogContent .log-warning {
+    background-color: var(--log-warning-line-bg);
+    color: var(--log-warning-text);
+    font-weight: 500;
+    display: block;
+    padding: 4px 8px;
+    margin: 0 -8px;
+    border-left: 4px solid var(--log-warning-line-border);
+    border-radius: 2px;
+}
+
+#modalLogContent .log-critical {
+    background-color: var(--log-critical-line-bg);
+    color: var(--log-critical-text);
+    font-weight: 500;
+    display: block;
+    padding: 4px 8px;
+    margin: 0 -8px;
+    border-left: 4px solid var(--log-critical-line-border);
+    border-radius: 2px;
+}
+
+
+/* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        margin: 10px auto;
+        padding: 20px;
+    }
+    h1 {
+        font-size: 2em;
+    }
+    #refreshButton {
+        padding: 10px 20px;
+        font-size: 1em;
+    }
     .bulletins-grid {
-        grid-template-columns: 1fr; /* Single column on small screens */
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .bulletin-card {
+        padding: 20px;
+    }
+    .bulletin-card h2 {
+        font-size: 1.4em;
+    }
+    .bulletin-actions {
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 10px;
     }
     .bulletin-actions button,
     .bulletin-actions a {
-        flex: auto; /* Buttons take full width */
         width: 100%;
+        min-width: unset;
     }
     .modal-content {
-        width: 95%;
-        margin: 5% auto;
-        padding: 20px;
+        width: 98%;
+        margin: 2% auto;
+        padding: 25px;
+        max-height: 95vh;
+    }
+    .modal-content h2 {
+        font-size: 1.6em;
+    }
+    .close-button {
+        font-size: 30px;
+        top: 15px;
+        right: 20px;
+    }
+    .modal-log-actions { /* Renamed class */
+        flex-direction: column; /* Stack export buttons vertically */
+        align-items: center; /* Center them */
+        gap: 10px;
+    }
+    .export-log-button {
+        width: 100%;
+        min-width: unset;
+    }
+    #modalLogContent {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.8em;
+        letter-spacing: normal;
+    }
+    .header-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    #refreshButton {
+        width: 100%;
+    }
+    #lastUpdated {
+        text-align: center;
     }
 }
