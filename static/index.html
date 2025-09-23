@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BQRM Bulletin Monitor</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>BQRM Bulletin Monitor</h1>
+        <div class="header-actions">
+            <button id="refreshButton">Refresh Status</button>
+            <span id="lastUpdated">Last updated: Never</span>
+        </div>
+        <div id="bulletins-container" class="bulletins-grid">
+            <!-- Bulletin cards will be loaded here by JavaScript -->
+            <div class="loading-message">Loading bulletin statuses...</div>
+        </div>
+    </div>
+
+    <!-- Log Modal Structure -->
+    <div id="logModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Log for <span id="modalBulletinName"></span></h2>
+            <pre id="modalLogContent"></pre>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
