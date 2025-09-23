@@ -1,11 +1,11 @@
 import os
-from flask import Flask, jsonify, request, send_from_directory, abort # Import abort
+from flask import Flask, jsonify, request, send_from_directory, abort
 import datetime
 import logging
 import atexit
-import re 
+import re
 
-from config import BULLETINS, SUCCESS_KEYWORDS, ERROR_KEYWORDS, LOG_LINES_TO_FETCH
+from config import BULLETINS, SUCCESS_KEYWORDS, ERROR_KEYWORDS, WARNING_KEYWORDS, CRITICAL_KEYWORDS, LOG_LINES_TO_FETCH
 from ssh_utils import BQRMSshClient
 
 app = Flask(__name__, static_folder='static')
@@ -32,22 +32,61 @@ if bqrm_ssh_client:
 def parse_log_status(log_content):
     """
     Analyzes the log content to determine the bulletin's status.
-    This is a basic keyword-based approach.
+    Prioritizes CRITICAL > FAILED > SUCCESS.
+    If SUCCESS is found, it remains SUCCESS even if WARNINGs are present,
+    but a 'has_warnings' flag is set.
     """
     if not log_content or "Error fetching log file" in log_content:
-        return "UNKNOWN", "Log not available or error fetching. Check log path/permissions."
+        return "UNKNOWN", False # Return status and has_warnings flag
 
     log_content_upper = log_content.upper()
 
-    for keyword in ERROR_KEYWORDS:
-        if keyword in log_content_upper:
-            return "FAILED", "Error keyword found in recent logs"
+    is_critical = any(kw in log_content_upper for kw in CRITICAL_KEYWORDS)
+    is_failed = any(kw in log_content_upper for kw in ERROR_KEYWORDS)
+    is_success = any(kw in log_content_upper for kw in SUCCESS_KEYWORDS)
+    is_warning = any(kw in log_content_upper for kw in WARNING_KEYWORDS)
 
-    for keyword in SUCCESS_KEYWORDS:
-        if keyword in log_content_upper:
-            return "SUCCESS", "Success keyword found in recent logs."
+    final_status = "UNKNOWN"
+    has_warnings_notification = False
 
-    return "UNKNOWN", "No clear success/failure keywords found in recent logs."
+    if is_critical:
+        final_status = "CRITICAL"
+    elif is_failed:
+        final_status = "FAILED"
+    elif is_success:
+        final_status = "SUCCESS"
+        if is_warning: # If success, but also warnings, note it for notification
+            has_warnings_notification = True
+    elif is_warning: # Only if no CRITICAL, FAILED, or SUCCESS
+        final_status = "WARNING"
+
+    return final_status, has_warnings_notification
+
+
+def format_full_log_with_styles(raw_log_content):
+    """
+    Parses raw log content and wraps lines containing specific keywords
+    with <span> tags and corresponding CSS classes for styling.
+    """
+    if not raw_log_content:
+        return ""
+
+    styled_lines = []
+    for line in raw_log_content.splitlines():
+        line_upper = line.upper()
+        
+        # Prioritize critical, then error, then warning for highlighting
+        if any(kw in line_upper for kw in CRITICAL_KEYWORDS):
+            styled_lines.append(f'<span class="log-critical">{line}</span>')
+        elif any(kw in line_upper for kw in ERROR_KEYWORDS):
+            styled_lines.append(f'<span class="log-error">{line}</span>')
+        elif any(kw in line_upper for kw in WARNING_KEYWORDS):
+            styled_lines.append(f'<span class="log-warning">{line}</span>')
+        else:
+            styled_lines.append(line)
+    
+    return "\n".join(styled_lines)
+
 
 def get_bulletin_details_summary(bulletin_config):
     """
@@ -58,36 +97,40 @@ def get_bulletin_details_summary(bulletin_config):
         return {
             "id": bulletin_config["id"],
             "name": bulletin_config["name"],
-            "status": "ERROR",
+            "status": "SSH_ERROR", # Specific status for SSH connection issues for this bulletin
             "last_run": "N/A",
-            "last_log_summary": "Backend SSH client not initialized or connection inactive. Check server logs for connection issues.",
-            "code_link": bulletin_config["code_link"]
+            "has_warnings": False, # No warnings if SSH is down
+            "access_command": bulletin_config["access_command"]
         }
 
     # Fetch only the last N lines for the summary view
     log_content_summary = bqrm_ssh_client.get_last_log_lines(bulletin_config["log_path"])
-    status, message = parse_log_status(log_content_summary)
+    status, has_warnings_notification = parse_log_status(log_content_summary)
 
-    last_run_time = "N/A" ## variable with valuse N/A 
-    lines = log_content_summary.splitlines() 
-    if lines:
-        for line in reversed(lines[-min(10, len(lines)):]):
-            if len(line) >= 19 and line[4] == '-' and line[7] == '-' and line[10] == ' ' and line[13] == ':' and line[16] == ':':
-                try:
-                    timestamp_str = line[:19]
-                    datetime.datetime.strptime(timestamp_str, '%Y-%m-%d %H:%M:%S')
-                    last_run_time = timestamp_str
-                    break
-                except ValueError:
-                    pass
+    last_run_time = "N/A"
+    # Regex to find YYYY-MM-DD HH:MM:SS at the start of a line
+    timestamp_pattern = re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}')
+    
+    # Iterate through lines from the end to find the latest valid timestamp
+    for line in reversed(log_content_summary.splitlines()):
+        match = timestamp_pattern.match(line)
+        if match:
+            try:
+                # Validate the timestamp string
+                datetime.datetime.strptime(match.group(0), '%Y-%m-%d %H:%M:%S')
+                last_run_time = match.group(0)
+                break # Found the latest timestamp, exit loop
+            except ValueError:
+                # Not a valid date/time despite matching pattern (e.g., 2024-99-99)
+                continue
 
     return {
         "id": bulletin_config["id"],
         "name": bulletin_config["name"],
         "status": status,
         "last_run": last_run_time,
-        "last_log_summary": message,
-        "code_link": bulletin_config["code_link"]
+        "has_warnings": has_warnings_notification, # New field
+        "access_command": bulletin_config["access_command"]
     }
 
 def get_full_log_content(log_path):
@@ -97,7 +140,6 @@ def get_full_log_content(log_path):
     if not bqrm_ssh_client or not bqrm_ssh_client.is_active():
         return "Backend SSH client not initialized or connection inactive. Cannot fetch full log."
 
-    # Use 'cat' or 'tail -n +1' to get the entire file
     command = f"cat {log_path}" # 'tail -n +1 {log_path}' is an alternative
     success, output, error = bqrm_ssh_client.execute_command(command)
     if success:
@@ -117,13 +159,14 @@ def get_all_bulletins_status():
     logging.info("Received request for all bulletin statuses (summary).")
     results = []
     for bulletin_config in BULLETINS:
-        results.append(get_bulletin_details_summary(bulletin_config)) # Use summary function
+        results.append(get_bulletin_details_summary(bulletin_config))
     return jsonify(results)
 
 @app.route('/api/bulletins/<string:bulletin_id>/full_log', methods=['GET'])
 def get_bulletin_full_log(bulletin_id):
     """
-    API endpoint to get the full log content for a specific bulletin.
+    API endpoint to get the full log content for a specific bulletin,
+    formatted with styling spans.
     """
     logging.info(f"Received request for full log for bulletin ID: {bulletin_id}")
 
@@ -136,8 +179,12 @@ def get_bulletin_full_log(bulletin_id):
         logging.warning(f"Full log request for unknown bulletin ID: {bulletin_id}")
         abort(404, description=f"Bulletin with ID '{bulletin_id}' not found.")
 
-    full_log = get_full_log_content(bulletin["log_path"])
-    return jsonify({"bulletin_id": bulletin_id, "name": bulletin["name"], "full_log": full_log})
+    raw_full_log = get_full_log_content(bulletin["log_path"])
+    
+    # Apply styling to the log content
+    styled_full_log = format_full_log_with_styles(raw_full_log)
+    
+    return jsonify({"bulletin_id": bulletin_id, "name": bulletin["name"], "full_log": styled_full_log})
 
 
 @app.route('/api/bulletins/<string:bulletin_id>/rerun', methods=['POST'])
@@ -170,7 +217,7 @@ def check_global_ssh_client_status():
     if request.path.startswith('/api'):
         if bqrm_ssh_client is None:
             logging.warning(f"API request to {request.path} received but SSH client was never initialized. Returning 503.")
-            return jsonify({"message": "Backend SSH client failed to initialize at startup. Please check server logs.", "status": "error"}), 503
+            return jsonify({"message": "Backend SSH client failed to initialize at startup. Please check server logs.", "status": "SYSTEM_ERROR"}), 503
         elif not bqrm_ssh_client.is_active():
             logging.warning(f"API request to {request.path} received but SSH client is not active. Attempting re-connection before returning 503.")
             try:
@@ -180,7 +227,7 @@ def check_global_ssh_client_status():
                     return
             except Exception as e:
                 logging.error(f"Failed to re-connect SSH client for API request: {e}")
-            return jsonify({"message": "Backend SSH client connection is currently inactive. Please check server logs.", "status": "error"}), 503
+            return jsonify({"message": "Backend SSH client connection is currently inactive. Please check server logs.", "status": "SYSTEM_ERROR"}), 503
 
 if __name__ == '__main__':
     os.makedirs(app.static_folder, exist_ok=True)
