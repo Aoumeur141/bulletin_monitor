@@ -1,12 +1,9 @@
-#/bulletin_monitor/config.py
-
 import os
 from dotenv import load_dotenv
-##dotenv stand for dot-environment for 
+
 load_dotenv() # This loads variables from your .env file into os.environ
 
 # --- SSH Configuration ---
-# Get these values from your .env file for security
 BQRM_HOST = os.getenv("BQRM_HOST")
 BQRM_USER = os.getenv("BQRM_USER")
 BQRM_PRIVATE_KEY_PATH = os.getenv("BQRM_PRIVATE_KEY_PATH") # Path to your SSH private key
@@ -22,8 +19,10 @@ BULLETINS = [
         "log_path": "/home/bqrm/BQRM_V01/sonelgaz/scr/logs/sonelgaz.log",
         "rerun_command": "/bin/bash /home/bqrm/BQRM_V01/sonelgaz/scr/run.sh",
         "code_link": f"ssh://{BQRM_USER}@{BQRM_HOST}/home/bqrm/BQRM_V01/sonelgaz/scr/",
-        # NEW: Command to copy for direct terminal access
-        "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/sonelgaz/scr; bash'"
+        # "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/sonelgaz/scr; bash'", # REMOVED
+        "product_paths": [ 
+            {"name": "Sonelgaz Bulletin", "template": "/home/bqrm/BQRM_V01/sonelgaz/bulletins/Bulletin_Sonelgaz_{day}-{month}-{year}.docx"}
+        ]
     },
     {
         "id": "BMSLA",
@@ -31,7 +30,10 @@ BULLETINS = [
         "log_path": "/home/bqrm/BQRM_V01/BMSLA/scr/logs/BMSLA.log",
         "rerun_command": "/bin/bash /home/bqrm/BQRM_V01/BMSLA/scr/run.sh",
         "code_link": f"ssh://{BQRM_USER}@{BQRM_HOST}/home/bqrm/BQRM_V01/BMSLA/scr/",
-        "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/BMSLA/scr; bash'"
+        # "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/BMSLA/scr; bash'", # REMOVED
+        "product_paths": [ # <--- CHANGED TO LIST
+            {"name": "Anti-Locust Bulletin", "template": "/home/bqrm/BQRM_V01/BMSLA/bulletins/Bulletin_antiacridienne_{Day}-{Month}-{Year}.docx"} # Using {Day}-{Month}-{Year} for consistency with example
+        ]
     },
     {
         "id": "BQRM-main",
@@ -39,7 +41,10 @@ BULLETINS = [
         "log_path": "/home/bqrm/BQRM_V01/BQRM-main/scr/logs/bqrm_ref.log",
         "rerun_command": "/bin/bash /home/bqrm/BQRM_V01/BQRM-main/scr/run.sh",
         "code_link": f"ssh://{BQRM_USER}@{BQRM_HOST}/home/bqrm/BQRM_V01/BQRM-main/scr/",
-        "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/BQRM-main/scr; bash'"
+        # "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/BQRM-main/scr; bash'", # REMOVED
+        "product_paths": [ # <--- CHANGED TO LIST
+            {"name": "BQRM Main Report", "template": "/home/bqrm/BQRM_V01/BQRM-main/bulletins/{year}/{month}/{day}/BQRM_{year_short}{month}{day}0600.docx"}
+        ]
     },
     {
         "id": "BQCP24h",
@@ -47,7 +52,11 @@ BULLETINS = [
         "log_path": "/home/bqrm/BQRM_V01/BQCP24h/logs/BQCP24h.log",
         "rerun_command": "/bin/bash /home/bqrm/BQRM_V01/BQCP24h/run.sh",
         "code_link": f"ssh://{BQRM_USER}@{BQRM_HOST}/home/bqrm/BQRM_V01/BQCP24h/scr/",
-        "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/BQCP24h/scr; bash'"
+        # "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/BQCP24h/scr; bash'", # REMOVED
+        "product_paths": [  
+            {"name": "SynopClim Precip Table", "template": "/home/bqrm/BQRM_V01/BQCP24h/SynopClim_precip_table{month}{day}0600.docx"},
+            {"name": "Cumul Table", "template": "/home/bqrm/BQRM_V01/BQCP24h/Cumul_table{month}{day}0600.docx"}
+        ]
     },
    {
         "id": "synop2bufr",
@@ -55,13 +64,13 @@ BULLETINS = [
         "log_path": "/home/bqrm/BQRM_V01/synop2bufr/logs/synop2bufr_script.log",
         "rerun_command": "/bin/bash /home/bqrm/BQRM_V01/synop2bufr/synop2bufr.sh",
         "code_link": f"ssh://{BQRM_USER}@{BQRM_HOST}/home/bqrm/BQRM_V01/synop2bufr/",
-        "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/synop2bufr; bash'"
+        # "access_command": f"ssh {BQRM_USER}@{BQRM_HOST} -t 'cd /home/bqrm/BQRM_V01/synop2bufr; bash'", # REMOVED
+        "product_paths": []  
       },
 ]
 
 # --- Log Parsing Configuration ---
-# Keywords to look for in the log to determine status (case-insensitive)
 SUCCESS_KEYWORDS = ["SUCCESS", "COMPLETED", "FINISHED"]
 ERROR_KEYWORDS = ["ERROR", "FAILURE", "FAILED", "EXCEPTION"]
-WARNING_KEYWORDS = ["WARNING", "WARN"] # New: Keywords for warnings
-CRITICAL_KEYWORDS = ["CRITICAL", "FATAL", "SEVERE"] # New: Keywords for critical errors
+WARNING_KEYWORDS = ["WARNING", "WARN"]
+CRITICAL_KEYWORDS = ["CRITICAL", "FATAL", "SEVERE"]
