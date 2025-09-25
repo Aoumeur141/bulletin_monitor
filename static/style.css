@@ -30,6 +30,8 @@
     --status-warning: #ff8c00; /* DarkOrange - for warnings */
     --status-ssh-error: #8B0000; /* Dark red for specific bulletin SSH issues */
     --status-system-error: #6c757d; /* Grey, for general system errors (e.g., API failure) */
+    --status-pending: #ffc107; /* Orange/Yellow for pending, similar to unknown but distinct */
+    --status-no-recent-run: #6c757d; /* Grey for no recent run, similar to system error but distinct */
 
     /* Log Line Specific Styles */
     --log-text-normal: var(--text-primary);
@@ -207,16 +209,18 @@ h1 {
 .status-WARNING { background-color: var(--status-warning); }
 .status-SSH_ERROR { background-color: var(--status-ssh-error); } /* For individual bulletin SSH issues */
 .status-SYSTEM_ERROR { background-color: var(--status-system-error); } /* For global backend/API errors */
+.status-PENDING { background-color: var(--status-pending); color: #333; } /* New: Pending status */
+.status-NO_RECENT_RUN { background-color: var(--status-no-recent-run); } /* New: No recent run status */
 
 /* New: Styling for the warning badge/notification */
 .warning-badge {
     display: inline-block;
     margin-left: 8px;
-    font-size: 1.1em; /* Make it slightly larger than text */
-    color: var(--status-warning); /* Use the warning color */
-    vertical-align: middle; /* Align with text */
-    cursor: help; /* Indicate it's informational */
-    animation: flashWarning 1.5s infinite alternate; /* Subtle animation */
+    font-size: 1.1em;
+    color: var(--status-warning);
+    vertical-align: middle;
+    cursor: help;
+    animation: flashWarning 1.5s infinite alternate;
 }
 
 @keyframes flashWarning {
@@ -234,7 +238,7 @@ h1 {
 }
 
 .bulletin-actions button,
-.bulletin-actions a { /* Keep 'a' for potential future links, though currently unused */
+.bulletin-actions a {
     flex: 1;
     min-width: 130px;
     padding: 10px 18px;
@@ -294,7 +298,7 @@ h1 {
     background-color: rgba(0,0,0,0.9);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
 }
