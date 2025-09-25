@@ -1,103 +1,55 @@
-#/bulletin_monitor/ssh_utils.py
+import paramiko ## it is responsable for ssh connection
+import os ## operation system hundeling
+import logging ## for logging evvent 
+import datetime # Added for logging timestamps
 
-import paramiko
-import logging
-import os
-import time
-
-# Import configuration from our config.py file
-from config import BQRM_HOST, BQRM_USER, BQRM_PRIVATE_KEY_PATH, BQRM_PASSWORD, LOG_LINES_TO_FETCH
+from config import BQRM_HOST, BQRM_USER, BQRM_PRIVATE_KEY_PATH, BQRM_PASSWORD,LOG_LINES_TO_FETCH
 
 # Set up basic logging for this module
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s') ## use fonction from logging lebreries basiconfig to set up the logging parameter 
 
 class BQRMSshClient:
-    """
-    A utility class to manage SSH connections and operations on the BQRM server.
-    """
     def __init__(self):
-        self.client = paramiko.SSHClient()
-        # Automatically add the server's host key.
-        # In production, consider a more secure policy like WarningPolicy or manually adding keys.
-        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self._is_connected = False # Internal state to track connection status
-        try:
-            self._connect() # Attempt to connect immediately upon creation
-            self._is_connected = True
-        except Exception as e:
-            logging.error(f"Initial SSH connection failed: {e}")
-            self._is_connected = False
-            # Do not re-raise here, allow the client to be created but in a disconnected state.
-            # The app.py's before_request will handle this state for API calls.
+        self.client = None
+        self.sftp = None
+        self._connect()
 
     def _connect(self):
-        """
-        Establishes an SSH connection to the BQRM server using either a private key or password.
-        Raises exceptions on connection failure.
-        """
-        if not BQRM_HOST or not BQRM_USER:
-            raise ValueError("BQRM_HOST or BQRM_USER is not configured in .env.")
-
-        # Close existing connection if active before attempting a new one
-        if self.client.get_transport() and self.client.get_transport().is_active():
-            self.client.close()
-            logging.info("Closed existing SSH connection before attempting re-connect.")
-
         try:
-            logging.info(f"Attempting to connect to BQRM: {BQRM_USER}@{BQRM_HOST}")
+            if self.client and self.client.get_transport() and self.client.get_transport().is_active():
+                logging.info(f"{datetime.datetime.now()} - SSH client already connected.")
+                return
+
+            self.client = paramiko.SSHClient()
+            self.client.load_system_host_keys()
+            self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
             if BQRM_PRIVATE_KEY_PATH and os.path.exists(BQRM_PRIVATE_KEY_PATH):
-                # Using SSH private key for authentication
-                self.client.connect(
-                    hostname=BQRM_HOST,
-                    username=BQRM_USER,
-                    key_filename=BQRM_PRIVATE_KEY_PATH,
-                    timeout=10 # Connection timeout in seconds
-                )
-                logging.info(f"Connected using private key: {BQRM_PRIVATE_KEY_PATH}")
+                private_key = paramiko.RSAKey.from_private_key_file(BQRM_PRIVATE_KEY_PATH)
+                self.client.connect(hostname=BQRM_HOST, username=BQRM_USER, pkey=private_key)
+                logging.info(f"{datetime.datetime.now()} - SSH connected to {BQRM_HOST} with private key.")
             elif BQRM_PASSWORD:
-                # Using password for authentication (less secure, use key if possible)
-                self.client.connect(
-                    hostname=BQRM_HOST,
-                    username=BQRM_USER,
-                    password=BQRM_PASSWORD,
-                    timeout=10
-                )
-                logging.info("Connected using password.")
+                self.client.connect(hostname=BQRM_HOST, username=BQRM_USER, password=BQRM_PASSWORD)
+                logging.info(f"{datetime.datetime.now()} - SSH connected to {BQRM_HOST} with password.")
             else:
-                raise ValueError("No valid SSH credentials provided (BQRM_PRIVATE_KEY_PATH or BQRM_PASSWORD missing/invalid).")
-            logging.info("Successfully established SSH connection to BQRM.")
-            self._is_connected = True # Update internal state
-        except paramiko.AuthenticationException:
-            logging.error("SSH Authentication failed. Please verify BQRM_USER and your key/password.")
-            self._is_connected = False
-            raise
-        except paramiko.SSHException as e:
-            logging.error(f"Could not establish SSH connection to {BQRM_HOST}: {e}")
-            self._is_connected = False
-            raise
+                raise ValueError("Neither BQRM_PRIVATE_KEY_PATH nor BQRM_PASSWORD is set for SSH connection.")
+            
+            self.sftp = self.client.open_sftp()
+            logging.info(f"{datetime.datetime.now()} - SFTP client opened.")
+
         except Exception as e:
-            logging.error(f"An unexpected error occurred during SSH connection: {e}")
-            self._is_connected = False
-            raise
+            logging.error(f"{datetime.datetime.now()} - Failed to establish SSH connection: {e}")
+            self.client = None
+            self.sftp = None
 
     def is_active(self):
-        """Checks if the SSH connection is currently active."""
-        # Check both internal state and Paramiko's transport status
-        return self._is_connected and self.client.get_transport() and self.client.get_transport().is_active()
+        return self.client is not None and self.client.get_transport() and self.client.get_transport().is_active()
 
     def execute_command(self, command, timeout=30):
-        """
-        Executes a shell command on the BQRM server.
-        Args:
-            command (str): The shell command to execute.
-            timeout (int): Maximum time in seconds to wait for the command to complete.
-        Returns:
-            tuple: (success (bool), stdout_output (str), stderr_output (str))
-        """
         if not self.is_active():
             logging.warning("SSH client is not connected or connection is inactive. Attempting to re-connect.")
             try:
-                self._connect() # Try to re-establish connection
+                self._connect()
             except Exception as e:
                 logging.error(f"Failed to re-connect SSH: {e}")
                 return False, "", f"SSH connection inactive and failed to re-connect: {e}"
@@ -105,7 +57,7 @@ class BQRMSshClient:
         try:
             logging.info(f"Executing command on BQRM: '{command}'")
             stdin, stdout, stderr = self.client.exec_command(command, timeout=timeout)
-            exit_status = stdout.channel.recv_exit_status() # Wait for command to complete and get exit status
+            exit_status = stdout.channel.recv_exit_status()
             output = stdout.read().decode().strip()
             error = stderr.read().decode().strip()
 
@@ -123,27 +75,59 @@ class BQRMSshClient:
             return False, "", str(e)
 
     def get_last_log_lines(self, log_path):
-        """
-        Fetches the last N lines of a log file from the BQRM server.
-        Args:
-            log_path (str): The full path to the log file on BQRM.
-        Returns:
-            str: The content of the last N log lines, or an error message.
-        """
         command = f"tail -n {LOG_LINES_TO_FETCH} {log_path}"
         success, output, error = self.execute_command(command)
         if success:
             return output
         else:
-            # If tail fails, it usually means the file doesn't exist or permissions are wrong
             logging.warning(f"Could not fetch log for {log_path}. Error: {error}")
             return f"Error fetching log file '{log_path}': {error}"
 
+    def file_exists(self, remote_path):
+        """
+        Checks if a file exists on the remote server using SFTP.
+        Returns True if exists, False otherwise (or on SSH error).
+        """
+        if not self.is_active():
+            logging.warning(f"{datetime.datetime.now()} - SSH client inactive, cannot check file existence for {remote_path}.")
+            return False
+
+        try:
+            self.sftp.stat(remote_path)
+            return True
+        except FileNotFoundError:
+            return False
+        except Exception as e:
+            logging.error(f"{datetime.datetime.now()} - Error checking file existence for '{remote_path}': {e}")
+            return False
+
+    def download_file(self, remote_path, local_temp_dir="temp_downloads"):
+        if not self.is_active():
+            self._connect()
+            if not self.is_active():
+                logging.error(f"{datetime.datetime.now()} - Failed to download {remote_path}: SSH connection inactive.")
+                return None, "SSH connection inactive."
+
+        try:
+            os.makedirs(local_temp_dir, exist_ok=True)
+            filename = os.path.basename(remote_path)
+            local_path = os.path.join(local_temp_dir, filename)
+            
+            logging.info(f"{datetime.datetime.now()} - Attempting to download remote file '{remote_path}' to local '{local_path}'")
+            self.sftp.get(remote_path, local_path)
+            logging.info(f"{datetime.datetime.now()} - Successfully downloaded '{remote_path}'")
+            return local_path, None
+        except FileNotFoundError:
+            logging.error(f"{datetime.datetime.now()} - Remote file not found: {remote_path}")
+            return None, f"Remote file not found: {remote_path}"
+        except Exception as e:
+            logging.error(f"{datetime.datetime.now()} - Error downloading file '{remote_path}': {e}")
+            return None, str(e)
+
     def close(self):
-        """Closes the SSH connection."""
         if self.client and self.client.get_transport() and self.client.get_transport().is_active():
             self.client.close()
-            self._is_connected = False # Update internal state
+            # Removed _is_connected as it's not a class member, rely on get_transport().is_active()
             logging.info("SSH connection to BQRM closed.")
         else:
             logging.info("SSH client was not active or already closed.")
@@ -185,6 +169,7 @@ if __name__ == "__main__":
                 print(f"Command 'this_command_does_not_exist' correctly failed. Error:\n{error}\n")
             else:
                 print(f"Command 'this_command_does_not_exist' unexpectedly succeeded. Output:\n{output}\n")
+
 
 
         else:
