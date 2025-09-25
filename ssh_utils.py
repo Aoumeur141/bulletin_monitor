@@ -1,12 +1,13 @@
-import paramiko ## it is responsable for ssh connection
-import os ## operation system hundeling
-import logging ## for logging evvent 
-import datetime # Added for logging timestamps
+# ssh_utils.py
 
-from config import BQRM_HOST, BQRM_USER, BQRM_PRIVATE_KEY_PATH, BQRM_PASSWORD,LOG_LINES_TO_FETCH
+import paramiko
+import os
+import logging
+import datetime
 
-# Set up basic logging for this module
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s') ## use fonction from logging lebreries basiconfig to set up the logging parameter 
+from config import BQRM_HOST, BQRM_USER, BQRM_PRIVATE_KEY_PATH, BQRM_PASSWORD, LOG_LINES_TO_FETCH
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class BQRMSshClient:
     def __init__(self):
