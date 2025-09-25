@@ -1,3 +1,4 @@
+// script.js
 document.addEventListener('DOMContentLoaded', () => {
     const bulletinsContainer = document.getElementById('bulletins-container');
     const refreshButton = document.getElementById('refreshButton');
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportWarningsButton = document.getElementById('exportWarningsButton');
     const exportCriticalButton = document.getElementById('exportCriticalButton');
 
-    const API_BASE_URL = '/api'; // Flask backend API base URL
+    const API_BASE_URL = '/api';
 
     // Function to fetch and display bulletin statuses (summary)
     async function fetchBulletinsStatus() {
@@ -33,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
             updateLastUpdated();
         } catch (error) {
             console.error("Error fetching bulletin statuses:", error);
-            // Use SYSTEM_ERROR status for global API fetch failures
             bulletinsContainer.innerHTML = `<div class="loading-message status-SYSTEM_ERROR">Error loading bulletins: ${error.message}. Please check backend logs.</div>`;
             updateLastUpdated(true);
         } finally {
@@ -55,25 +55,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'bulletin-card';
 
-            // Add a warning icon/badge if has_warnings is true
             const warningBadge = bulletin.has_warnings ?
-                '<span class="warning-badge" title="Warnings found in log">&#9888;</span>' : ''; // Unicode warning sign
+                '<span class="warning-badge" title="Warnings found in log">&#9888;</span>' : '';
             
             card.innerHTML = `
                 <h2>${bulletin.name}</h2>
                 <div class="bulletin-info">
                     <p>Status: <span class="status-indicator status-${bulletin.status}">${bulletin.status}</span>${warningBadge}</p>
                     <p>Last Run: <strong>${bulletin.last_run}</strong></p>
-                    <!-- Summary removed as per request -->
                 </div>
-                <div class="bulletin-actions">
+                <div class="bulletin-actions" id="actions-${bulletin.id}">
                     <button class="rerun-button" data-id="${bulletin.id}">Rerun</button>
                     <button class="view-log-button" data-id="${bulletin.id}">View Log</button>
-                    <!-- "Go to Code" link removed as per request -->
-                    <button class="access-terminal-button" data-id="${bulletin.id}" data-command="${bulletin.access_command}">Access Terminal</button>
+                    <!-- Download Product Buttons will be added dynamically here -->
                 </div>
             `;
             bulletinsContainer.appendChild(card);
+
+            const actionsDiv = card.querySelector(`#actions-${bulletin.id}`);
+            // NEW: bulletin.product_info now contains availability
+            if (bulletin.product_info && bulletin.product_info.length > 0) {
+                bulletin.product_info.forEach((product_details, index) => { // Iterate over product_info
+                    const downloadButton = document.createElement('button');
+                    downloadButton.className = 'download-product-button';
+                    downloadButton.dataset.id = bulletin.id;
+                    downloadButton.dataset.productIndex = index; // Store the index
+                    downloadButton.textContent = product_details.name || `Download Product ${index + 1}`;
+                    
+                    // Disable button if product is not available
+                    if (!product_details.available) {
+                        downloadButton.disabled = true;
+                        downloadButton.title = `Product "${product_details.name}" not available for today.`;
+                    }
+                    actionsDiv.appendChild(downloadButton);
+                });
+            }
         });
     }
 
@@ -113,18 +129,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             setTimeout(() => {
                 button.textContent = originalText;
-                button.style.backgroundColor = ''; // Reset background
+                button.style.backgroundColor = '';
                 button.disabled = false;
                 fetchBulletinsStatus(); // Refresh status after a brief delay
-            }, 2000); // Show message for 2 seconds
+            }, 2000);
         }
     }
 
-    // Function to show log modal - NOW FETCHES FULL LOG ON DEMAND
+    // Function to show log modal
     async function showLogModal(bulletinId, button) {
-        modalBulletinName.textContent = bulletinId; // Temporarily set to ID
+        modalBulletinName.textContent = bulletinId;
         modalLogContent.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-dim);">Loading full log...</div>';
-        logModal.style.display = 'flex'; // Use flex to center the modal
+        logModal.style.display = 'flex';
 
         if (button) {
             button.disabled = true;
@@ -139,10 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const data = await response.json();
 
-            modalBulletinName.textContent = data.name; // Set actual name
+            modalBulletinName.textContent = data.name;
             modalLogContent.innerHTML = data.full_log || 'No log content available.';
             
-            // Store the styled HTML log content for filtering/export
             modalLogContent.dataset.styledLogHtml = data.full_log; 
 
         } catch (error) {
@@ -156,26 +171,63 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Function to copy access command to clipboard
-    async function copyAccessCommand(command, button) {
+    // NEW: Function to download bulletin product
+    async function downloadBulletinProduct(bulletinId, productIndex, button) {
+        if (button.disabled) { // Prevent action if button is already disabled (e.g., product not available)
+            return;
+        }
+
+        button.disabled = true;
+        const originalText = button.textContent;
+        button.textContent = 'Downloading...';
+
         try {
-            await navigator.clipboard.writeText(command);
-            const originalText = button.textContent;
-            button.textContent = 'Copied!';
-            button.style.backgroundColor = 'var(--status-success)'; // Temporary visual feedback
-            setTimeout(() => {
+            const response = await fetch(`${API_BASE_URL}/bulletins/${bulletinId}/download_product?index=${productIndex}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = `product_${bulletinId}_${new Date().toISOString().slice(0,10)}`;
+            if (contentDisposition && contentDisposition.indexOf('attachment') !== -1) {
+                const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1];
+                }
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+            button.textContent = 'Download Success!';
+            button.style.backgroundColor = 'var(--status-success)';
+        } catch (error) {
+            console.error("Error downloading product:", error);
+            button.textContent = 'Download Failed!';
+            button.style.backgroundColor = 'var(--status-failed)';
+            alert(`Failed to download product for ${bulletinId}: ${error.message}. Check console for details.`);
+        } finally {
+                setTimeout(() => {
                 button.textContent = originalText;
-                button.style.backgroundColor = ''; // Reset background
-            }, 1500);
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
-            alert('Failed to copy command. Please copy manually: \n' + command);
+                button.style.backgroundColor = '';
+                // IMPORTANT: Re-fetch status to update the button's disabled state
+                fetchBulletinsStatus(); 
+            }, 2000);
         }
     }
 
     // Function to filter and export log content
     function filterAndExportLog(filterType) {
-        const logContentHtml = modalLogContent.dataset.styledLogHtml; // Get the styled HTML log
+        const logContentHtml = modalLogContent.dataset.styledLogHtml;
         if (!logContentHtml || logContentHtml.includes('Loading full log...')) {
             alert("No log content loaded yet or an error occurred. Please wait or try again.");
             return;
@@ -183,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let filteredLogLines = [];
         const dummyDiv = document.createElement('div');
-        dummyDiv.innerHTML = logContentHtml; // Parse the HTML content
+        dummyDiv.innerHTML = logContentHtml;
 
         let className;
         if (filterType === 'errors') className = 'log-error';
@@ -194,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Iterate over child nodes (which are expected to be <span> elements for styled lines)
         dummyDiv.childNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'SPAN' && node.classList.contains(className)) {
                 filteredLogLines.push(node.textContent);
@@ -223,9 +274,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         lastUpdatedSpan.textContent = `Last updated: ${now.toLocaleTimeString()} ${isError ? '(System Error)' : ''}`;
         if (isError) {
-            lastUpdatedSpan.style.color = 'var(--status-system-error)'; // Use CSS variable
+            lastUpdatedSpan.style.color = 'var(--status-system-error)';
         } else {
-            lastUpdatedSpan.style.color = 'var(--text-secondary)'; // Reset to default muted color
+            lastUpdatedSpan.style.color = 'var(--text-secondary)';
         }
     }
 
@@ -238,34 +289,29 @@ document.addEventListener('DOMContentLoaded', () => {
             rerunBulletin(target.dataset.id, target);
         } else if (target.classList.contains('view-log-button')) {
             showLogModal(target.dataset.id, target);
-        } else if (target.classList.contains('access-terminal-button')) {
-            copyAccessCommand(target.dataset.command, target);
+        } else if (target.classList.contains('download-product-button')) {
+            downloadBulletinProduct(target.dataset.id, target.dataset.productIndex, target);
         }
     });
 
-    // Close modal when close button is clicked
     closeButton.onclick = () => {
         logModal.style.display = 'none';
     };
 
-    // Close modal when clicking outside of it
     window.onclick = (event) => {
         if (event.target == logModal) {
             logModal.style.display = 'none';
         }
     };
 
-    // Attach event listeners to export buttons
     exportErrorsButton.addEventListener('click', () => filterAndExportLog('errors'));
     exportWarningsButton.addEventListener('click', () => filterAndExportLog('warnings'));
     exportCriticalButton.addEventListener('click', () => filterAndExportLog('critical'));
 
-    // Manual refresh button
     refreshButton.addEventListener('click', fetchBulletinsStatus);
 
-    // Initial fetch on page load
     fetchBulletinsStatus();
 
-    // Set up auto-refresh (e.g., every 30 seconds)
     setInterval(fetchBulletinsStatus, 30000); // 30 seconds
 });
+
